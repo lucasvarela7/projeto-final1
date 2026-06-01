@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogiTrack — Sistema de Logística e Rastreamento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ============================================================
+     PÁGINA DE LOGIN
+     ============================================================ -->
+<div id="login-page" style="display:none">
+  <div class="login-container">
+    <div class="login-logo">
+      <div class="logo-mark">🚚</div>
+      <h1>Logi<span>Track</span></h1>
+      <p>Sistema de Logística e Rastreamento de Entregas</p>
+    </div>
+
+    <div class="login-card">
+      <h2>Bem-vindo de volta</h2>
+      <p class="login-subtitle">Faça login para acessar o painel</p>
+
+      <div id="login-error" class="alert alert-danger" style="display:none">
+        ⚠️ <span></span>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          <input type="email" id="login-email" class="form-control" placeholder="seu@email.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <div style="position:relative">
+            <input type="password" id="login-senha" class="form-control" placeholder="••••••••" required autocomplete="current-password" style="padding-right:44px">
+            <button type="button" id="toggle-senha" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px">👁️</button>
+          </div>
+        </div>
+        <button type="submit" id="btn-login" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:8px">
+          <span class="spinner" id="btn-login-spinner" style="display:none;width:16px;height:16px"></span>
+          <span id="btn-login-text">Entrar no Sistema</span>
+        </button>
+      </form>
+
+      <div class="login-divider">Contas de demonstração</div>
+
+      <div class="demo-accounts">
+        <button class="demo-btn" onclick="Auth.fillDemo('admin@logitrack.com','password')">
+          <div class="demo-role">🔴 Administrador</div>
+          <div class="demo-email">admin@logitrack.com</div>
+        </button>
+        <button class="demo-btn" onclick="Auth.fillDemo('operador@logitrack.com','password')">
+          <div class="demo-role">🔵 Operador Logístico</div>
+          <div class="demo-email">operador@logitrack.com</div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     APLICAÇÃO PRINCIPAL
+     ============================================================ -->
+<div id="app" style="display:none">
+
+  <!-- Overlay Mobile -->
+  <div id="mobile-overlay" class="mobile-overlay" onclick="App.toggleSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🚚</div>
+      <div class="logo-text">Logi<span>Track</span></div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Principal</div>
+        <button class="nav-item" data-page="dashboard">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Dashboard</span>
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">Operações</div>
+        <button class="nav-item" data-page="entregas">
+          <span class="nav-icon">📦</span>
+          <span class="nav-label">Entregas</span>
+        </button>
+        <button class="nav-item" data-page="rastreamento">
+          <span class="nav-icon">📍</span>
+          <span class="nav-label">Rastreamento</span>
+        </button>
+        <button class="nav-item" data-page="motoristas">
+          <span class="nav-icon">🚛</span>
+          <span class="nav-label">Motoristas</span>
+        </button>
+        <button class="nav-item" data-page="rotas">
+          <span class="nav-icon">🗺️</span>
+          <span class="nav-label">Rotas</span>
+        </button>
+      </div>
+
+      <div class="nav-section" data-role="administrador">
+        <div class="nav-section-title">Administração</div>
+        <button class="nav-item" data-page="usuarios" data-role="administrador">
+          <span class="nav-icon">👥</span>
+          <span class="nav-label">Usuários</span>
+        </button>
+      </div>
+    </nav>
+
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">A</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name">Usuário</div>
+        <div class="user-role" id="user-role">Cargo</div>
+      </div>
+      <button class="btn-logout" onclick="App.logout()" title="Sair">⏻</button>
+    </div>
+  </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main id="main-content" class="main-content">
+
+    <!-- HEADER -->
+    <header class="main-header">
+      <button class="btn-toggle-sidebar" onclick="App.toggleSidebar()">☰</button>
+      <div>
+        <div class="header-title" id="header-title">Dashboard</div>
+        <div class="header-subtitle" id="header-subtitle">Visão geral do sistema</div>
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" onclick="App.loadPage(App.currentPage)">🔄 Atualizar</button>
+      </div>
+    </header>
+
+    <!-- PÁGINAS -->
+    <div class="page-content">
+
+      <!-- ======================================================
+           PÁGINA: DASHBOARD
+           ====================================================== -->
+      <div id="page-dashboard" class="page">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon blue">📦</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-total">—</div>
+              <div class="stat-label">Total de Entregas</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">✅</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-entregues">—</div>
+              <div class="stat-label">Entregas Concluídas</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple">🚛</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-em-rota">—</div>
+              <div class="stat-label">Em Rota</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">⚠️</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-atrasadas">—</div>
+              <div class="stat-label">Entregas Atrasadas</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">⏳</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-pendentes">—</div>
+              <div class="stat-label">Pendentes</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon cyan">👨‍✈️</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-motoristas">—</div>
+              <div class="stat-label">Total Motoristas</div>
+              <div class="stat-change up" id="stat-motoristas-ativos"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Entregas por Status</div>
+                <div class="card-subtitle">Distribuição atual</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas id="chart-status"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Entregas por Dia</div>
+                <div class="card-subtitle">Últimos 7 dias</div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas id="chart-dia"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Últimas Entregas</div>
+              <div class="card-subtitle">5 mais recentes</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="App.navigateTo('entregas')">Ver todas →</button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código</th><th>Cliente</th><th>Motorista</th><th>Status</th><th>Data Prevista</th>
+                </tr>
+              </thead>
+              <tbody id="ultimas-entregas-tbody">
+                <tr><td colspan="5" class="text-center text-muted" style="padding:24px">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           PÁGINA: ENTREGAS
+           ====================================================== -->
+      <div id="page-entregas" class="page">
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-entregas" placeholder="Buscar por código, cliente, destino..." oninput="Utils.debounce(Entregas.applyFilters.bind(Entregas), 400)()">
+          </div>
+          <select class="filter-select" id="filter-entrega-status" onchange="Entregas.applyFilters()">
+            <option value="">Todos os status</option>
+            <option value="pendente">Pendente</option>
+            <option value="em_preparacao">Em Preparação</option>
+            <option value="em_rota">Em Rota</option>
+            <option value="entregue">Entregue</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+          <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" onclick="Entregas.exportExcel()">📊 Excel</button>
+            <button class="btn btn-secondary btn-sm" onclick="Entregas.exportPDF()">📄 PDF</button>
+            <button class="btn btn-primary" onclick="Entregas.openModal()">+ Nova Entrega</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código</th><th>Cliente</th><th>Destino</th><th>Motorista</th>
+                  <th>Status</th><th>Dt. Prevista</th><th>Dt. Entrega</th><th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="entregas-tbody">
+                <tr><td colspan="8" class="text-center text-muted" style="padding:24px">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="entregas-pagination"></div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           PÁGINA: MOTORISTAS
+           ====================================================== -->
+      <div id="page-motoristas" class="page">
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-motoristas" placeholder="Buscar por nome, CPF, CNH..." oninput="Utils.debounce(Motoristas.applyFilters.bind(Motoristas), 400)()">
+          </div>
+          <select class="filter-select" id="filter-motorista-status" onchange="Motoristas.applyFilters()">
+            <option value="">Todos os status</option>
+            <option value="ativo">Ativo</option>
+            <option value="em_rota">Em Rota</option>
+            <option value="inativo">Inativo</option>
+            <option value="ferias">Férias</option>
+          </select>
+          <div id="motoristas-stats" style="display:flex;gap:8px;align-items:center"></div>
+          <button class="btn btn-primary" style="margin-left:auto" onclick="Motoristas.openModal()">+ Novo Motorista</button>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome / CPF</th><th>Telefone</th><th>CNH</th><th>Veículo</th>
+                  <th>Placa</th><th>Status</th><th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="motoristas-tbody">
+                <tr><td colspan="7" class="text-center text-muted" style="padding:24px">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="motoristas-pagination"></div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           PÁGINA: ROTAS
+           ====================================================== -->
+      <div id="page-rotas" class="page">
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-rotas" placeholder="Buscar por nome, cidade, região..." oninput="Utils.debounce(Rotas.applyFilters.bind(Rotas), 400)()">
+          </div>
+          <button class="btn btn-primary" style="margin-left:auto" onclick="Rotas.openModal()">+ Nova Rota</button>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th><th>Origem</th><th>Destino</th><th>Região</th>
+                  <th>Distância</th><th>Tempo Est.</th><th>Status</th><th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="rotas-tbody">
+                <tr><td colspan="8" class="text-center text-muted" style="padding:24px">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="rotas-pagination"></div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           PÁGINA: RASTREAMENTO
+           ====================================================== -->
+      <div id="page-rastreamento" class="page">
+        <div class="toolbar">
+          <div style="margin-left:auto">
+            <button class="btn btn-primary" onclick="Rastreamento.openUpdateModal()">📍 Atualizar Localização</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Histórico de Movimentações</div>
+              <div class="card-subtitle">Todas as atualizações de rastreamento</div>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Código</th><th>Cliente</th><th>Localização</th>
+                  <th>Status</th><th>Atualizado por</th><th>Data/Hora</th>
+                </tr>
+              </thead>
+              <tbody id="rastreamento-tbody">
+                <tr><td colspan="6" class="text-center text-muted" style="padding:24px">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="rastreamento-pagination"></div>
+        </div>
+      </div>
+
+      <!-- ======================================================
+           PÁGINA: USUÁRIOS
+           ====================================================== -->
+      <div id="page-usuarios" class="page">
+        <div class="toolbar">
+          <button class="btn btn-primary" style="margin-left:auto" onclick="Usuarios.openModal()">+ Novo Usuário</button>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nome</th><th>E-mail</th><th>Cargo</th><th>Status</th>
+                  <th>Último Login</th><th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="usuarios-tbody">
+                <tr><td colspan="6" class="text-center text-muted" style="padding:24px">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination" id="usuarios-pagination"></div>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+</div><!-- /app -->
+
+<!-- ============================================================
+     MODAIS
+     ============================================================ -->
+
+<!-- Modal: Nova/Editar Entrega -->
+<div id="modal-entrega" class="modal-overlay">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-entrega-title">Nova Entrega</div>
+      <button class="modal-close" onclick="Modal.close('modal-entrega')">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-entrega">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Cliente *</label>
+            <input type="text" id="ent-cliente-nome" class="form-control" placeholder="Nome do cliente">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefone do Cliente</label>
+            <input type="text" id="ent-cliente-telefone" class="form-control" placeholder="(11) 99999-9999">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail do Cliente</label>
+          <input type="email" id="ent-cliente-email" class="form-control" placeholder="cliente@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Endereço de Origem *</label>
+          <input type="text" id="ent-origem" class="form-control" placeholder="Rua, número, bairro, cidade/UF">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Endereço de Destino *</label>
+            <input type="text" id="ent-destino" class="form-control" placeholder="Rua, número, bairro, cidade/UF">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cidade de Destino</label>
+            <input type="text" id="ent-cidade-destino" class="form-control" placeholder="Cidade">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Motorista</label>
+            <select id="ent-motorista" class="form-control">
+              <option value="">Selecionar motorista...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rota</label>
+            <select id="ent-rota" class="form-control">
+              <option value="">Selecionar rota...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Data de Saída</label>
+            <input type="datetime-local" id="ent-data-saida" class="form-control">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data Prevista *</label>
+            <input type="datetime-local" id="ent-data-prevista" class="form-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select id="ent-status" class="form-control">
+              <option value="pendente">Pendente</option>
+              <option value="em_preparacao">Em Preparação</option>
+              <option value="em_rota">Em Rota</option>
+              <option value="entregue">Entregue</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Peso (kg)</label>
+            <input type="number" id="ent-peso" class="form-control" placeholder="0.00" step="0.01">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observações</label>
+          <textarea id="ent-observacoes" class="form-control" placeholder="Informações adicionais..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-entrega')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-entrega" onclick="Entregas.save()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Rastreamento da Entrega -->
+<div id="modal-tracking" class="modal-overlay">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-tracking-title">Rastreamento</div>
+      <button class="modal-close" onclick="Modal.close('modal-tracking')">×</button>
+    </div>
+    <div class="modal-body" id="tracking-content">
+      <div class="text-center text-muted" style="padding:24px">Carregando...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-tracking')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Novo/Editar Motorista -->
+<div id="modal-motorista" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-motorista-title">Novo Motorista</div>
+      <button class="modal-close" onclick="Modal.close('modal-motorista')">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-motorista">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nome Completo *</label>
+            <input type="text" id="mot-nome" class="form-control" placeholder="Nome do motorista">
+          </div>
+          <div class="form-group">
+            <label class="form-label">CPF *</label>
+            <input type="text" id="mot-cpf" class="form-control" placeholder="000.000.000-00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Telefone *</label>
+            <input type="text" id="mot-telefone" class="form-control" placeholder="(11) 99999-9999">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Número da CNH *</label>
+            <input type="text" id="mot-cnh" class="form-control" placeholder="CNH000000">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Categoria CNH</label>
+            <select id="mot-categoria" class="form-control">
+              <option value="A">A</option><option value="B" selected>B</option>
+              <option value="C">C</option><option value="D">D</option>
+              <option value="E">E</option><option value="AB">AB</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select id="mot-status" class="form-control">
+              <option value="ativo">Ativo</option>
+              <option value="inativo">Inativo</option>
+              <option value="em_rota">Em Rota</option>
+              <option value="ferias">Férias</option>
+              <option value="afastado">Afastado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Veículo</label>
+            <input type="text" id="mot-veiculo" class="form-control" placeholder="Ex: Caminhão VW 17.280">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Placa do Veículo</label>
+            <input type="text" id="mot-placa" class="form-control" placeholder="ABC-1234">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observações</label>
+          <textarea id="mot-observacoes" class="form-control" placeholder="Informações adicionais..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-motorista')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-motorista" onclick="Motoristas.save()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nova/Editar Rota -->
+<div id="modal-rota" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-rota-title">Nova Rota</div>
+      <button class="modal-close" onclick="Modal.close('modal-rota')">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-rota">
+        <div class="form-group">
+          <label class="form-label">Nome da Rota *</label>
+          <input type="text" id="rota-nome" class="form-control" placeholder="Ex: Rota SP-RJ">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Cidade de Origem *</label>
+            <input type="text" id="rota-origem" class="form-control" placeholder="São Paulo">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cidade de Destino *</label>
+            <input type="text" id="rota-destino" class="form-control" placeholder="Rio de Janeiro">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Região</label>
+            <input type="text" id="rota-regiao" class="form-control" placeholder="Ex: Sudeste">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Distância (km)</label>
+            <input type="number" id="rota-distancia" class="form-control" placeholder="429" step="0.01">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tempo Estimado</label>
+            <input type="text" id="rota-tempo" class="form-control" placeholder="Ex: 5h 30min">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select id="rota-ativa" class="form-control">
+              <option value="1">Ativa</option>
+              <option value="0">Inativa</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <textarea id="rota-descricao" class="form-control" placeholder="Descrição da rota..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-rota')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-rota" onclick="Rotas.save()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Atualizar Rastreamento -->
+<div id="modal-rastreamento" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Atualizar Localização</div>
+      <button class="modal-close" onclick="Modal.close('modal-rastreamento')">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-rastreamento">
+        <div class="form-group">
+          <label class="form-label">Entrega *</label>
+          <select id="rastr-entrega" class="form-control">
+            <option value="">Selecionar entrega em rota...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Localização Atual *</label>
+          <input type="text" id="rastr-localizacao" class="form-control" placeholder="Ex: Rodovia Presidente Dutra, km 200">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Novo Status *</label>
+          <select id="rastr-status" class="form-control">
+            <option value="em_preparacao">Em Preparação</option>
+            <option value="em_rota" selected>Em Rota</option>
+            <option value="entregue">Entregue</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <textarea id="rastr-descricao" class="form-control" placeholder="Detalhes da atualização..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-rastreamento')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-rastreamento" onclick="Rastreamento.save()">Atualizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Novo/Editar Usuário -->
+<div id="modal-usuario" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-usuario-title">Novo Usuário</div>
+      <button class="modal-close" onclick="Modal.close('modal-usuario')">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-usuario">
+        <div class="form-group">
+          <label class="form-label">Nome Completo *</label>
+          <input type="text" id="usr-nome" class="form-control" placeholder="Nome do usuário">
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail *</label>
+          <input type="email" id="usr-email" class="form-control" placeholder="email@logitrack.com">
+        </div>
+        <div id="senha-group" class="form-group">
+          <label class="form-label">Senha *</label>
+          <input type="password" id="usr-senha" class="form-control" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Cargo</label>
+            <select id="usr-cargo" class="form-control">
+              <option value="operador">Operador Logístico</option>
+              <option value="administrador">Administrador</option>
+              <option value="motorista">Motorista</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select id="usr-ativo" class="form-control">
+              <option value="1">Ativo</option>
+              <option value="0">Inativo</option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-usuario')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-usuario" onclick="Usuarios.save()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/entregas.js"></script>
+<script src="js/modules.js"></script>
+
+</body>
+</html>

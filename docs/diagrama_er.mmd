@@ -1,0 +1,77 @@
+erDiagram
+    usuarios ||--o{ motoristas : "usuario_id (opcional)"
+    usuarios ||--o{ entregas : "criado_por"
+    usuarios ||--o{ rastreamento : "atualizado_por"
+    motoristas ||--o{ entregas : "motorista_id"
+    rotas ||--o{ entregas : "rota_id"
+    entregas ||--|{ rastreamento : "entrega_id (cascade)"
+
+    usuarios {
+        int id PK
+        string nome
+        string email UK
+        string senha
+        enum cargo
+        boolean ativo
+        datetime ultimo_login
+        datetime criado_em
+    }
+
+    motoristas {
+        int id PK
+        string nome
+        string cpf UK
+        string telefone
+        string cnh UK
+        enum categoria_cnh
+        string veiculo
+        string placa_veiculo
+        enum status
+        int usuario_id FK
+        text observacoes
+    }
+
+    rotas {
+        int id PK
+        string nome
+        string cidade_origem
+        string cidade_destino
+        string regiao
+        decimal distancia_km
+        string tempo_estimado
+        text descricao
+        boolean ativa
+    }
+
+    entregas {
+        int id PK
+        string codigo UK
+        string cliente_nome
+        string cliente_telefone
+        string cliente_email
+        string endereco_origem
+        string endereco_destino
+        string cidade_destino
+        string cep_destino
+        int motorista_id FK
+        int rota_id FK
+        int criado_por FK
+        datetime data_saida
+        datetime data_prevista
+        datetime data_entrega
+        enum status
+        decimal peso_kg
+        text observacoes
+    }
+
+    rastreamento {
+        int id PK
+        int entrega_id FK
+        string localizacao
+        decimal latitude
+        decimal longitude
+        enum status
+        text descricao
+        int atualizado_por FK
+        datetime criado_em
+    }
