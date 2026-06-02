@@ -133,7 +133,7 @@ CREATE INDEX idx_usuarios_cargo ON usuarios(cargo);
 -- DADOS INICIAIS - Usuário Administrador
 -- ============================================================
 -- Senha: Admin@123 (hash bcrypt)
-INSERT INTO usuarios (nome, email, senha, cargo) VALUES
+INSERT IGNORE INTO usuarios (nome, email, senha, cargo) VALUES
 ('Administrador', 'admin@logitrack.com', '$2b$10$7zefb850D.eKpM11GfHBnOZkvONmk6/q90RNQp1/O37CyRZeJ1Jlq', 'administrador'),
 ('Operador Padrão', 'operador@logitrack.com', '$2b$10$7zefb850D.eKpM11GfHBnOZkvONmk6/q90RNQp1/O37CyRZeJ1Jlq', 'operador');
 
@@ -150,7 +150,7 @@ INSERT INTO rotas (nome, cidade_origem, cidade_destino, regiao, distancia_km, te
 -- ============================================================
 -- DADOS DE EXEMPLO - Motoristas
 -- ============================================================
-INSERT INTO motoristas (nome, cpf, telefone, cnh, categoria_cnh, veiculo, placa_veiculo, status) VALUES
+INSERT IGNORE INTO motoristas (nome, cpf, telefone, cnh, categoria_cnh, veiculo, placa_veiculo, status) VALUES
 ('Carlos Silva', '123.456.789-00', '(11) 99999-1111', 'CNH001234', 'C', 'Caminhão Truck VW 17.280', 'ABC-1234', 'ativo'),
 ('Marcos Oliveira', '987.654.321-00', '(11) 99999-2222', 'CNH005678', 'D', 'Ônibus Mercedes OF 1519', 'DEF-5678', 'ativo'),
 ('Fernanda Costa', '456.789.123-00', '(11) 99999-3333', 'CNH009012', 'B', 'Van Fiat Ducato', 'GHI-9012', 'em_rota'),
@@ -159,7 +159,7 @@ INSERT INTO motoristas (nome, cpf, telefone, cnh, categoria_cnh, veiculo, placa_
 -- ============================================================
 -- DADOS DE EXEMPLO - Entregas
 -- ============================================================
-INSERT INTO entregas (codigo, cliente_nome, cliente_telefone, endereco_origem, endereco_destino, cidade_destino, motorista_id, rota_id, data_saida, data_prevista, status) VALUES
+INSERT IGNORE INTO entregas (codigo, cliente_nome, cliente_telefone, endereco_origem, endereco_destino, cidade_destino, motorista_id, rota_id, data_saida, data_prevista, status) VALUES
 ('LT-2024-0001', 'Empresa ABC Ltda', '(11) 3333-1111', 'Av. Paulista, 1000 - São Paulo/SP', 'Rua do Comércio, 500 - Rio de Janeiro/RJ', 'Rio de Janeiro', 1, 1, NOW(), DATE_ADD(NOW(), INTERVAL 1 DAY), 'em_rota'),
 ('LT-2024-0002', 'João da Silva', '(21) 9999-2222', 'Rua Augusta, 200 - São Paulo/SP', 'Av. Atlântica, 300 - Rio de Janeiro/RJ', 'Rio de Janeiro', 2, 1, DATE_SUB(NOW(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY), 'entregue'),
 ('LT-2024-0003', 'Maria Souza', '(31) 8888-3333', 'Rua Oscar Freire, 50 - São Paulo/SP', 'Av. Afonso Pena, 1000 - Belo Horizonte/MG', 'Belo Horizonte', 3, 2, NOW(), DATE_ADD(NOW(), INTERVAL 2 DAY), 'em_preparacao'),
@@ -176,3 +176,77 @@ INSERT INTO rastreamento (entrega_id, localizacao, status, descricao) VALUES
 (2, 'Rodovia Presidente Dutra, km 300', 'em_rota', 'Em trânsito'),
 (2, 'Rio de Janeiro - RJ (Destino)', 'entregue', 'Entrega realizada com sucesso. Recebido por: João da Silva');
 
+<<<<<<< HEAD
+=======
+-- ============================================================
+-- EXTENSÕES ENTERPRISE - PHASE 1
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS vehicles (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  license_plate VARCHAR(15) NOT NULL UNIQUE,
+  model VARCHAR(100) NOT NULL,
+  manufacturer VARCHAR(100) NOT NULL,
+  year SMALLINT UNSIGNED DEFAULT NULL,
+  cargo_capacity DECIMAL(10,2) DEFAULT NULL,
+  fuel_type VARCHAR(50) DEFAULT NULL,
+  status ENUM('available','in_use','maintenance','inactive') NOT NULL DEFAULT 'available',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS vehicle_routes (
+  vehicle_id INT UNSIGNED NOT NULL,
+  route_id INT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (vehicle_id, route_id),
+  CONSTRAINT fk_vehicle_routes_vehicle FOREIGN KEY (vehicle_id)
+    REFERENCES vehicles(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_vehicle_routes_route FOREIGN KEY (route_id)
+    REFERENCES rotas(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS customers (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  cpf_cnpj VARCHAR(20) NOT NULL UNIQUE,
+  email VARCHAR(150) DEFAULT NULL,
+  phone VARCHAR(20) DEFAULT NULL,
+  zip_code VARCHAR(12) DEFAULT NULL,
+  street VARCHAR(150) DEFAULT NULL,
+  neighborhood VARCHAR(120) DEFAULT NULL,
+  city VARCHAR(100) DEFAULT NULL,
+  state CHAR(2) DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS customer_orders (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  customer_id INT UNSIGNED NOT NULL,
+  order_code VARCHAR(40) NOT NULL UNIQUE,
+  status ENUM('open','processing','completed','cancelled') NOT NULL DEFAULT 'open',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_customer_orders_customer FOREIGN KEY (customer_id)
+    REFERENCES customers(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE motoristas
+  ADD COLUMN vehicle_id INT UNSIGNED DEFAULT NULL,
+  ADD CONSTRAINT fk_motorista_vehicle FOREIGN KEY (vehicle_id)
+    REFERENCES vehicles(id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE entregas
+  ADD COLUMN vehicle_id INT UNSIGNED DEFAULT NULL,
+  ADD COLUMN customer_id INT UNSIGNED DEFAULT NULL,
+  ADD COLUMN route_distance_km DECIMAL(10,2) DEFAULT NULL,
+  ADD CONSTRAINT fk_entrega_vehicle FOREIGN KEY (vehicle_id)
+    REFERENCES vehicles(id) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT fk_entrega_customer FOREIGN KEY (customer_id)
+    REFERENCES customers(id) ON DELETE SET NULL ON UPDATE CASCADE;
+
+CREATE INDEX idx_vehicles_status ON vehicles(status);
+CREATE INDEX idx_entregas_vehicle_id ON entregas(vehicle_id);
+CREATE INDEX idx_entregas_customer_id ON entregas(customer_id);
+>>>>>>> pedro

@@ -52,6 +52,9 @@ const Dashboard = {
   renderStats(data) {
     const e = data.entregas;
     const m = data.motoristas;
+    const v = data.veiculos || {};
+    const c = data.clientes || {};
+    const mm = data.map_metrics || {};
 
     document.getElementById('stat-total').textContent = e.total || 0;
     document.getElementById('stat-entregues').textContent = e.entregues || 0;
@@ -60,6 +63,16 @@ const Dashboard = {
     document.getElementById('stat-pendentes').textContent = e.pendentes || 0;
     document.getElementById('stat-motoristas').textContent = m.total || 0;
     document.getElementById('stat-motoristas-ativos').textContent = m.ativos || 0;
+    const statVehicles = document.getElementById('stat-veiculos');
+    const statCustomers = document.getElementById('stat-clientes');
+    const statDistance = document.getElementById('stat-distancia-total');
+    const statAvgDistance = document.getElementById('stat-distancia-media');
+    const statAvgTime = document.getElementById('stat-tempo-medio');
+    if (statVehicles) statVehicles.textContent = v.total || 0;
+    if (statCustomers) statCustomers.textContent = c.total || 0;
+    if (statDistance) statDistance.textContent = Number(mm.total_distance_traveled || 0).toFixed(1) + ' km';
+    if (statAvgDistance) statAvgDistance.textContent = Number(mm.average_route_distance || 0).toFixed(1) + ' km';
+    if (statAvgTime) statAvgTime.textContent = Math.round(mm.average_delivery_time_minutes || 0) + ' min';
 
     // Taxa de sucesso
     const taxa = e.total > 0 ? Math.round((e.entregues / e.total) * 100) : 0;
