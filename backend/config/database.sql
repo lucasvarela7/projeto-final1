@@ -175,3 +175,6 @@ INSERT INTO rastreamento (entrega_id, localizacao, status, descricao) VALUES
 (2, 'São Paulo - SP (Origem)', 'em_preparacao', 'Pedido em preparação'),
 (2, 'Rodovia Presidente Dutra, km 300', 'em_rota', 'Em trânsito'),
 (2, 'Rio de Janeiro - RJ (Destino)', 'entregue', 'Entrega realizada com sucesso. Recebido por: João da Silva');
+
+ALTER TABLE usuarios DROP CONSTRAINT chk_email;
+ALTER TABLE usuarios ADD CONSTRAINT chk_email CHECK (email REGEXP '^[^@]+@[^@]+\.[^@]{2,}$');
