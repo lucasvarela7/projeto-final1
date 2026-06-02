@@ -21,9 +21,12 @@ const listar = async (req, res, next) => {
     if (data_fim) { where += ' AND e.data_prevista <= ?'; params.push(data_fim); }
 
     const [rows] = await db.query(
-      `SELECT e.*, m.nome as motorista_nome, r.nome as rota_nome
+      `SELECT e.*, m.nome as motorista_nome, r.nome as rota_nome, v.license_plate as vehicle_plate,
+              c.name as customer_name
        FROM entregas e
        LEFT JOIN motoristas m ON e.motorista_id = m.id
+       LEFT JOIN vehicles v ON e.vehicle_id = v.id
+       LEFT JOIN customers c ON e.customer_id = c.id
        LEFT JOIN rotas r ON e.rota_id = r.id
        ${where} ORDER BY e.criado_em DESC LIMIT ? OFFSET ?`,
       [...params, parseInt(limit), parseInt(offset)]
@@ -37,9 +40,12 @@ const listar = async (req, res, next) => {
 const buscarPorId = async (req, res, next) => {
   try {
     const [rows] = await db.query(
-      `SELECT e.*, m.nome as motorista_nome, m.telefone as motorista_telefone, r.nome as rota_nome
+      `SELECT e.*, m.nome as motorista_nome, m.telefone as motorista_telefone, r.nome as rota_nome,
+              v.license_plate as vehicle_plate, c.name as customer_name
        FROM entregas e
        LEFT JOIN motoristas m ON e.motorista_id = m.id
+       LEFT JOIN vehicles v ON e.vehicle_id = v.id
+       LEFT JOIN customers c ON e.customer_id = c.id
        LEFT JOIN rotas r ON e.rota_id = r.id
        WHERE e.id = ?`,
       [req.params.id]
@@ -62,18 +68,19 @@ const criar = async (req, res, next) => {
   try {
     const { cliente_nome, cliente_telefone, cliente_email, endereco_origem, endereco_destino,
       cidade_destino, cep_destino, motorista_id, rota_id, data_saida, data_prevista,
-      peso_kg, volume_m3, valor_declarado, observacoes } = req.body;
+      peso_kg, volume_m3, valor_declarado, observacoes, vehicle_id, customer_id, route_distance_km } = req.body;
 
     const codigo = await gerarCodigo();
 
     const [result] = await db.query(
       `INSERT INTO entregas (codigo, cliente_nome, cliente_telefone, cliente_email, endereco_origem,
        endereco_destino, cidade_destino, cep_destino, motorista_id, rota_id, criado_por,
-       data_saida, data_prevista, peso_kg, volume_m3, valor_declarado, observacoes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       data_saida, data_prevista, peso_kg, volume_m3, valor_declarado, observacoes, vehicle_id, customer_id, route_distance_km)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [codigo, cliente_nome, cliente_telefone, cliente_email, endereco_origem,
        endereco_destino, cidade_destino, cep_destino, motorista_id || null, rota_id || null,
        req.user.id, data_saida || null, data_prevista, peso_kg, volume_m3, valor_declarado, observacoes]
+       .concat([vehicle_id || null, customer_id || null, route_distance_km || null])
     );
 
     // Registrar rastreamento inicial
@@ -90,10 +97,24 @@ const atualizar = async (req, res, next) => {
   try {
     const { cliente_nome, cliente_telefone, cliente_email, endereco_origem, endereco_destino,
       cidade_destino, cep_destino, motorista_id, rota_id, data_saida, data_prevista,
-      status, peso_kg, volume_m3, valor_declarado, observacoes } = req.body;
+      status, peso_kg, volume_m3, valor_declarado, observacoes, vehicle_id, customer_id, route_distance_km } = req.body;
 
     const [rows] = await db.query('SELECT id, status FROM entregas WHERE id = ?', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, message: 'Entrega não encontrada' });
+
+
+   const dataEntrega = status === 'entregue' ? new Date() : null;
+await db.query(
+  `UPDATE entregas SET cliente_nome=?, cliente_telefone=?, cliente_email=?, endereco_origem=?,
+   endereco_destino=?, cidade_destino=?, cep_destino=?, motorista_id=?, rota_id=?,
+   data_saida=?, data_prevista=?, status=?, data_entrega=?,
+   peso_kg=?, volume_m3=?, valor_declarado=?, observacoes=? WHERE id=?`,
+  [cliente_nome, cliente_telefone, cliente_email, endereco_origem, endereco_destino,
+   cidade_destino, cep_destino, motorista_id || null, rota_id || null,
+   data_saida || null, data_prevista, status || rows[0].status,
+   dataEntrega,  // ← agora é um valor, não string
+   peso_kg, volume_m3, valor_declarado, observacoes, req.params.id]
+);
 
     const dataEntrega = status === 'entregue' ? 'NOW()' : 'NULL';
 
@@ -101,12 +122,13 @@ const atualizar = async (req, res, next) => {
       `UPDATE entregas SET cliente_nome=?, cliente_telefone=?, cliente_email=?, endereco_origem=?,
        endereco_destino=?, cidade_destino=?, cep_destino=?, motorista_id=?, rota_id=?,
        data_saida=?, data_prevista=?, status=?, data_entrega=${dataEntrega},
-       peso_kg=?, volume_m3=?, valor_declarado=?, observacoes=? WHERE id=?`,
+       peso_kg=?, volume_m3=?, valor_declarado=?, observacoes=?, vehicle_id=?, customer_id=?, route_distance_km=? WHERE id=?`,
       [cliente_nome, cliente_telefone, cliente_email, endereco_origem, endereco_destino,
        cidade_destino, cep_destino, motorista_id || null, rota_id || null,
        data_saida || null, data_prevista, status || rows[0].status,
-       peso_kg, volume_m3, valor_declarado, observacoes, req.params.id]
+       peso_kg, volume_m3, valor_declarado, observacoes, vehicle_id || null, customer_id || null, route_distance_km || null, req.params.id]
     );
+
 
     // Se status mudou, registrar rastreamento
     if (status && status !== rows[0].status) {
@@ -155,6 +177,28 @@ const dashboard = async (req, res, next) => {
       FROM motoristas
     `);
 
+    const [[veiculos]] = await db.query(`
+      SELECT COUNT(*) as total,
+        SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as available,
+        SUM(CASE WHEN status = 'in_use' THEN 1 ELSE 0 END) as in_use
+      FROM vehicles
+    `);
+
+    const [[clientes]] = await db.query(`
+      SELECT COUNT(*) as total FROM customers
+    `);
+
+    const [[metricasMapa]] = await db.query(`
+      SELECT
+        COALESCE(SUM(route_distance_km), 0) as total_distance_traveled,
+        COALESCE(AVG(route_distance_km), 0) as average_route_distance,
+        COALESCE(AVG(CASE
+          WHEN data_saida IS NOT NULL AND data_entrega IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, data_saida, data_entrega)
+          ELSE NULL END), 0) as average_delivery_time_minutes
+      FROM entregas
+      WHERE route_distance_km IS NOT NULL
+    `);
+
     // Entregas por dia (últimos 7 dias)
     const [porDia] = await db.query(`
       SELECT DATE(criado_em) as data, COUNT(*) as total,
@@ -178,7 +222,15 @@ const dashboard = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: { entregas: stats, motoristas, graficos: { porDia, porStatus }, ultimas_entregas: ultimas }
+      data: {
+        entregas: stats,
+        motoristas,
+        veiculos,
+        clientes,
+        map_metrics: metricasMapa,
+        graficos: { porDia, porStatus },
+        ultimas_entregas: ultimas
+      }
     });
   } catch (error) { next(error); }
 };

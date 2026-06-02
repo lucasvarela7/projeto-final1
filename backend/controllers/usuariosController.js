@@ -32,6 +32,11 @@ const buscarPorId = async (req, res, next) => {
 const criar = async (req, res, next) => {
   try {
     const { nome, email, senha, cargo } = req.body;
+    
+    if (!senha || senha.length < 6) {
+      return res.status(400).json({ success: false, message: 'Senha deve ter no mínimo 6 caracteres' });
+    }
+    
     const [existing] = await db.query('SELECT id FROM usuarios WHERE email = ?', [email]);
     if (existing.length) return res.status(409).json({ success: false, message: 'E-mail já cadastrado' });
 

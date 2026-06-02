@@ -7,16 +7,54 @@ const Dashboard = {
 
   async load() {
     const result = await API.get('/entregas/dashboard');
-    if (!result || !result.ok) return;
+    if (!result || !result.ok) {
+      this.showError();
+      return;
+    }
     const data = result.data.data;
     this.renderStats(data);
     this.renderCharts(data);
     this.renderUltimasEntregas(data.ultimas_entregas);
   },
 
+  showError() {
+    // Zerar estatísticas
+    document.getElementById('stat-total').textContent = '—';
+    document.getElementById('stat-entregues').textContent = '—';
+    document.getElementById('stat-em-rota').textContent = '—';
+    document.getElementById('stat-atrasadas').textContent = '—';
+    document.getElementById('stat-pendentes').textContent = '—';
+    document.getElementById('stat-motoristas').textContent = '—';
+    document.getElementById('stat-motoristas-ativos').textContent = '';
+    const taxaEl = document.getElementById('stat-taxa');
+    if (taxaEl) taxaEl.textContent = '—';
+
+    // Tabela de últimas entregas
+    const tbody = document.getElementById('ultimas-entregas-tbody');
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center; padding:32px;">
+            <div class="empty-state">
+              <div class="empty-icon">⚠️</div>
+              <h3>Não foi possível carregar os dados</h3>
+              <p>Verifique sua conexão ou tente novamente mais tarde.</p>
+            </div>
+          </td>
+        </tr>`;
+    }
+
+    // Destruir gráficos antigos
+    if (this.charts.status) this.charts.status.destroy();
+    if (this.charts.dia) this.charts.dia.destroy();
+  },
+
   renderStats(data) {
     const e = data.entregas;
     const m = data.motoristas;
+    const v = data.veiculos || {};
+    const c = data.clientes || {};
+    const mm = data.map_metrics || {};
 
     document.getElementById('stat-total').textContent = e.total || 0;
     document.getElementById('stat-entregues').textContent = e.entregues || 0;
@@ -25,6 +63,16 @@ const Dashboard = {
     document.getElementById('stat-pendentes').textContent = e.pendentes || 0;
     document.getElementById('stat-motoristas').textContent = m.total || 0;
     document.getElementById('stat-motoristas-ativos').textContent = m.ativos || 0;
+    const statVehicles = document.getElementById('stat-veiculos');
+    const statCustomers = document.getElementById('stat-clientes');
+    const statDistance = document.getElementById('stat-distancia-total');
+    const statAvgDistance = document.getElementById('stat-distancia-media');
+    const statAvgTime = document.getElementById('stat-tempo-medio');
+    if (statVehicles) statVehicles.textContent = v.total || 0;
+    if (statCustomers) statCustomers.textContent = c.total || 0;
+    if (statDistance) statDistance.textContent = Number(mm.total_distance_traveled || 0).toFixed(1) + ' km';
+    if (statAvgDistance) statAvgDistance.textContent = Number(mm.average_route_distance || 0).toFixed(1) + ' km';
+    if (statAvgTime) statAvgTime.textContent = Math.round(mm.average_delivery_time_minutes || 0) + ' min';
 
     // Taxa de sucesso
     const taxa = e.total > 0 ? Math.round((e.entregues / e.total) * 100) : 0;

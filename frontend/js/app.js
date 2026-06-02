@@ -87,6 +87,9 @@ const App = {
       entregas: { title: 'Entregas', subtitle: 'Gerenciamento de entregas' },
       motoristas: { title: 'Motoristas', subtitle: 'Cadastro de motoristas' },
       rotas: { title: 'Rotas', subtitle: 'Gestão de rotas logísticas' },
+      veiculos: { title: 'Frota', subtitle: 'Gestão de veículos e disponibilidade' },
+      clientes: { title: 'Clientes', subtitle: 'Cadastro e relacionamento com entregas' },
+      mapa: { title: 'Mapa Logístico', subtitle: 'Visualização de rotas com Mapbox' },
       rastreamento: { title: 'Rastreamento', subtitle: 'Histórico de movimentações' },
       usuarios: { title: 'Usuários', subtitle: 'Gerenciamento de usuários' },
     };
@@ -104,6 +107,9 @@ const App = {
       case 'entregas': Entregas.load(); break;
       case 'motoristas': Motoristas.load(); break;
       case 'rotas': Rotas.load(); break;
+      case 'veiculos': Veiculos.load(); break;
+      case 'clientes': Clientes.load(); break;
+      case 'mapa': MapaLogistico.load(); break;
       case 'rastreamento': Rastreamento.load(); break;
       case 'usuarios': Usuarios.load(); break;
     }
@@ -258,6 +264,10 @@ const Utils = {
       em_rota: 'Em Rota',
       ferias: 'Férias',
       afastado: 'Afastado',
+      available: 'Disponível',
+      in_use: 'Em Uso',
+      maintenance: 'Manutenção',
+      inactive: 'Inativo',
       administrador: 'Administrador',
       operador: 'Operador',
       motorista: 'Motorista'

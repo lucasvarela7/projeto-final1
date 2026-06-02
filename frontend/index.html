@@ -6,6 +6,7 @@
   <title>LogiTrack — Sistema de Logística e Rastreamento</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -106,6 +107,18 @@
           <span class="nav-icon">🗺️</span>
           <span class="nav-label">Rotas</span>
         </button>
+        <button class="nav-item" data-page="veiculos">
+          <span class="nav-icon">🚐</span>
+          <span class="nav-label">Frota</span>
+        </button>
+        <button class="nav-item" data-page="clientes">
+          <span class="nav-icon">🏢</span>
+          <span class="nav-label">Clientes</span>
+        </button>
+        <button class="nav-item" data-page="mapa">
+          <span class="nav-icon">🧭</span>
+          <span class="nav-label">Mapa Logístico</span>
+        </button>
       </div>
 
       <div class="nav-section" data-role="administrador">
@@ -191,6 +204,41 @@
               <div class="stat-value" id="stat-motoristas">—</div>
               <div class="stat-label">Total Motoristas</div>
               <div class="stat-change up" id="stat-motoristas-ativos"></div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">🚐</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-veiculos">—</div>
+              <div class="stat-label">Total Veículos</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple">🏢</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-clientes">—</div>
+              <div class="stat-label">Total Clientes</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">📏</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-distancia-total">—</div>
+              <div class="stat-label">Distância Total</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon orange">📍</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-distancia-media">—</div>
+              <div class="stat-label">Distância Média</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon red">⏱️</div>
+            <div class="stat-info">
+              <div class="stat-value" id="stat-tempo-medio">—</div>
+              <div class="stat-label">Tempo Médio Entrega</div>
             </div>
           </div>
         </div>
@@ -357,6 +405,70 @@
         </div>
       </div>
 
+      <div id="page-veiculos" class="page">
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-veiculos" placeholder="Buscar por placa, modelo, fabricante..." oninput="Utils.debounce(Veiculos.applyFilters.bind(Veiculos), 400)()">
+          </div>
+          <select class="filter-select" id="filter-veiculo-status" onchange="Veiculos.applyFilters()">
+            <option value="">Todos os status</option>
+            <option value="available">Disponível</option>
+            <option value="in_use">Em uso</option>
+            <option value="maintenance">Manutenção</option>
+            <option value="inactive">Inativo</option>
+          </select>
+          <div id="veiculos-stats" style="display:flex;gap:8px;align-items:center"></div>
+          <button class="btn btn-primary" style="margin-left:auto" onclick="Veiculos.openModal()">+ Novo Veículo</button>
+        </div>
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Placa</th><th>Modelo</th><th>Ano</th><th>Capacidade</th><th>Combustível</th><th>Status</th><th>Ações</th></tr></thead>
+              <tbody id="veiculos-tbody"><tr><td colspan="7" class="text-center text-muted" style="padding:24px">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-clientes" class="page">
+        <div class="toolbar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-clientes" placeholder="Buscar por nome, CPF/CNPJ, e-mail..." oninput="Utils.debounce(Clientes.applyFilters.bind(Clientes), 400)()">
+          </div>
+          <div id="clientes-stats" style="display:flex;gap:8px;align-items:center"></div>
+          <button class="btn btn-primary" style="margin-left:auto" onclick="Clientes.openModal()">+ Novo Cliente</button>
+        </div>
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>E-mail</th><th>Telefone</th><th>Endereço</th><th>Ações</th></tr></thead>
+              <tbody id="clientes-tbody"><tr><td colspan="6" class="text-center text-muted" style="padding:24px">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-mapa" class="page">
+        <div class="toolbar">
+          <select id="map-entrega" class="form-control" style="max-width:380px">
+            <option value="">Selecione uma entrega...</option>
+          </select>
+          <button class="btn btn-primary" onclick="MapaLogistico.renderRoute()">Visualizar Rota</button>
+          <a class="btn btn-secondary" href="/api-docs" target="_blank" rel="noopener noreferrer" style="margin-left:auto">API Docs</a>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div id="map-container" style="height:430px;border-radius:10px;overflow:hidden"></div>
+            <div style="display:flex;gap:16px;margin-top:12px">
+              <span class="badge badge-operador">Distância: <strong id="map-distance">—</strong></span>
+              <span class="badge badge-ativo">Tempo estimado: <strong id="map-eta">—</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ======================================================
            PÁGINA: RASTREAMENTO
            ====================================================== -->
@@ -478,6 +590,20 @@
         </div>
         <div class="form-row">
           <div class="form-group">
+            <label class="form-label">Veículo</label>
+            <select id="ent-veiculo" class="form-control">
+              <option value="">Selecionar veículo...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cliente Cadastrado</label>
+            <select id="ent-cliente-id" class="form-control">
+              <option value="">Selecionar cliente...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
             <label class="form-label">Data de Saída</label>
             <input type="datetime-local" id="ent-data-saida" class="form-control">
           </div>
@@ -500,6 +626,10 @@
           <div class="form-group">
             <label class="form-label">Peso (kg)</label>
             <input type="number" id="ent-peso" class="form-control" placeholder="0.00" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Distância da Rota (km)</label>
+            <input type="number" id="ent-route-distance" class="form-control" placeholder="0.00" step="0.01">
           </div>
         </div>
         <div class="form-group">
@@ -591,6 +721,12 @@
           </div>
         </div>
         <div class="form-group">
+          <label class="form-label">Veículo Vinculado (Módulo Frota)</label>
+          <select id="mot-veiculo-id" class="form-control">
+            <option value="">Selecionar veículo vinculado...</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">Observações</label>
           <textarea id="mot-observacoes" class="form-control" placeholder="Informações adicionais..."></textarea>
         </div>
@@ -658,6 +794,80 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="Modal.close('modal-rota')">Cancelar</button>
       <button class="btn btn-primary" id="btn-salvar-rota" onclick="Rotas.save()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Novo/Editar Veículo -->
+<div id="modal-veiculo" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-veiculo-title">Novo Veículo</div>
+      <button class="modal-close" onclick="Modal.close('modal-veiculo')">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-veiculo">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Placa *</label><input id="vei-placa" class="form-control"></div>
+          <div class="form-group"><label class="form-label">Modelo *</label><input id="vei-modelo" class="form-control"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Fabricante *</label><input id="vei-fabricante" class="form-control"></div>
+          <div class="form-group"><label class="form-label">Ano</label><input id="vei-ano" type="number" class="form-control"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Capacidade de Carga</label><input id="vei-capacidade" type="number" class="form-control" step="0.01"></div>
+          <div class="form-group"><label class="form-label">Combustível</label><input id="vei-combustivel" class="form-control"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select id="vei-status" class="form-control">
+            <option value="available">Disponível</option>
+            <option value="in_use">Em uso</option>
+            <option value="maintenance">Manutenção</option>
+            <option value="inactive">Inativo</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-veiculo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="Veiculos.save()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Novo/Editar Cliente -->
+<div id="modal-cliente" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-cliente-title">Novo Cliente</div>
+      <button class="modal-close" onclick="Modal.close('modal-cliente')">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-cliente">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nome *</label><input id="cli-nome" class="form-control"></div>
+          <div class="form-group"><label class="form-label">CPF/CNPJ *</label><input id="cli-doc" class="form-control"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">E-mail</label><input id="cli-email" class="form-control"></div>
+          <div class="form-group"><label class="form-label">Telefone</label><input id="cli-telefone" class="form-control"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">CEP</label><input id="cli-cep" class="form-control"></div>
+          <div class="form-group"><label class="form-label">Rua</label><input id="cli-rua" class="form-control"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Bairro</label><input id="cli-bairro" class="form-control"></div>
+          <div class="form-group"><label class="form-label">Cidade</label><input id="cli-cidade" class="form-control"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Estado (UF)</label><input id="cli-estado" class="form-control" maxlength="2"></div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="Modal.close('modal-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="Clientes.save()">Salvar</button>
     </div>
   </div>
 </div>
@@ -759,6 +969,8 @@
 <script src="js/dashboard.js"></script>
 <script src="js/entregas.js"></script>
 <script src="js/modules.js"></script>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+<script src="js/enterprise.js"></script>
 
 </body>
 </html>
