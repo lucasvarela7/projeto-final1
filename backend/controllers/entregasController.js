@@ -102,7 +102,7 @@ const atualizar = async (req, res, next) => {
     const [rows] = await db.query('SELECT id, status FROM entregas WHERE id = ?', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, message: 'Entrega não encontrada' });
 
-<<<<<<< HEAD
+
    const dataEntrega = status === 'entregue' ? new Date() : null;
 await db.query(
   `UPDATE entregas SET cliente_nome=?, cliente_telefone=?, cliente_email=?, endereco_origem=?,
@@ -115,7 +115,7 @@ await db.query(
    dataEntrega,  // ← agora é um valor, não string
    peso_kg, volume_m3, valor_declarado, observacoes, req.params.id]
 );
-=======
+
     const dataEntrega = status === 'entregue' ? 'NOW()' : 'NULL';
 
     await db.query(
@@ -128,7 +128,7 @@ await db.query(
        data_saida || null, data_prevista, status || rows[0].status,
        peso_kg, volume_m3, valor_declarado, observacoes, vehicle_id || null, customer_id || null, route_distance_km || null, req.params.id]
     );
->>>>>>> pedro
+
 
     // Se status mudou, registrar rastreamento
     if (status && status !== rows[0].status) {
