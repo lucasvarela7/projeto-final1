@@ -95,8 +95,7 @@ const atualizar = async (req, res, next) => {
     const [rows] = await db.query('SELECT id, status FROM entregas WHERE id = ?', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, message: 'Entrega não encontrada' });
 
-    const dataEntrega = status === 'entregue' ? 'NOW()' : 'NULL';
-
+    const dataEntrega = status === 'entregue' ? new Date() : null;
     await db.query(
       `UPDATE entregas SET cliente_nome=?, cliente_telefone=?, cliente_email=?, endereco_origem=?,
        endereco_destino=?, cidade_destino=?, cep_destino=?, motorista_id=?, rota_id=?,

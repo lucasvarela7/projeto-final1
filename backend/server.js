@@ -61,10 +61,9 @@ app.get('/api/health', (req, res) => {
 });
 
 // Servir frontend para todas as outras rotas
-app.get('/{*path}', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
-  }
+// Servir frontend para todas as outras rotas (SPA fallback)
+app.use(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
 // ============================================================
