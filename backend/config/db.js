@@ -4,8 +4,8 @@ require('dotenv').config();
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || 'logitrack',
-  password: process.env.DB_PASSWORD || 'LogiTrack@2024',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || 'senai103',
   database: process.env.DB_NAME || 'logitrack',
   connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
   waitForConnections: true,
