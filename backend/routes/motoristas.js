@@ -14,13 +14,15 @@ router.post('/', authorize('administrador', 'operador'), [
   body('nome').notEmpty().withMessage('Nome obrigatório'),
   body('cpf').notEmpty().withMessage('CPF obrigatório'),
   body('telefone').notEmpty().withMessage('Telefone obrigatório'),
-  body('cnh').notEmpty().withMessage('CNH obrigatória')
+  body('cnh').notEmpty().withMessage('CNH obrigatória'),
+  body('vehicle_id').optional({ values: 'falsy' }).isInt().withMessage('Veículo inválido')
 ], validate, ctrl.criar);
 router.put('/:id', authorize('administrador', 'operador'), [
   body('nome').notEmpty().withMessage('Nome obrigatório'),
   body('cpf').notEmpty().withMessage('CPF obrigatório'),
   body('telefone').notEmpty().withMessage('Telefone obrigatório'),
-  body('cnh').notEmpty().withMessage('CNH obrigatória')
+  body('cnh').notEmpty().withMessage('CNH obrigatória'),
+  body('vehicle_id').optional({ values: 'falsy' }).isInt().withMessage('Veículo inválido')
 ], validate, ctrl.atualizar);
 router.delete('/:id', authorize('administrador'), ctrl.excluir);
 

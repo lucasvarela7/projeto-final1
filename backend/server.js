@@ -4,6 +4,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 
 const { errorHandler, notFound } = require('./middlewares/errorHandler');
 
@@ -14,6 +16,9 @@ const motoristasRoutes = require('./routes/motoristas');
 const entregasRoutes = require('./routes/entregas');
 const rotasRoutes = require('./routes/rotas');
 const rastreamentoRoutes = require('./routes/rastreamento');
+const veiculosRoutes = require('./routes/veiculos');
+const clientesRoutes = require('./routes/clientes');
+const mapaRoutes = require('./routes/mapa');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,6 +53,12 @@ app.use('/api/motoristas', motoristasRoutes);
 app.use('/api/entregas', entregasRoutes);
 app.use('/api/rotas', rotasRoutes);
 app.use('/api/rastreamento', rastreamentoRoutes);
+app.use('/api/veiculos', veiculosRoutes);
+app.use('/api/clientes', clientesRoutes);
+app.use('/api/mapa', mapaRoutes);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  swaggerOptions: { persistAuthorization: true }
+}));
 
 // Health check
 app.get('/api/health', (req, res) => {

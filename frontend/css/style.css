@@ -377,6 +377,14 @@ tbody td {
 
 .badge-inativo { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
 .badge-inativo::before { background: #6b7280; }
+.badge-available { background: rgba(76, 175, 80, 0.15); color: #4caf50; }
+.badge-available::before { background: #4caf50; }
+.badge-in_use { background: rgba(33, 150, 243, 0.15); color: #2196f3; }
+.badge-in_use::before { background: #2196f3; }
+.badge-maintenance { background: rgba(255, 152, 0, 0.15); color: #ff9800; }
+.badge-maintenance::before { background: #ff9800; }
+.badge-inactive { background: rgba(107, 114, 128, 0.15); color: #6b7280; }
+.badge-inactive::before { background: #6b7280; }
 
 .badge-administrador { background: rgba(244, 67, 54, 0.15); color: #f44336; }
 .badge-operador { background: rgba(33, 150, 243, 0.15); color: #2196f3; }
