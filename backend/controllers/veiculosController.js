@@ -2,8 +2,10 @@ const db = require('../config/db');
 
 const listar = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, status, busca } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
     const offset = (page - 1) * limit;
+    const { status, busca } = req.query;
     let where = 'WHERE 1=1';
     const params = [];
 
