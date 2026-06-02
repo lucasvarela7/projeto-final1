@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../config/db');
 
+console.log('JWT_SECRET no authController:', process.env.JWT_SECRET);
+
 /**
  * POST /api/auth/login
  */
