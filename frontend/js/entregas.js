@@ -105,6 +105,8 @@ const Entregas = {
     // Carregar motoristas e rotas para os selects
     await this.loadMotoristas();
     await this.loadRotas();
+    await this.loadVeiculos();
+    await this.loadClientes();
 
     if (id) {
       title.textContent = 'Editar Entrega';
@@ -119,10 +121,13 @@ const Entregas = {
         document.getElementById('ent-cidade-destino').value = e.cidade_destino || '';
         document.getElementById('ent-motorista').value = e.motorista_id || '';
         document.getElementById('ent-rota').value = e.rota_id || '';
+        document.getElementById('ent-veiculo').value = e.vehicle_id || '';
+        document.getElementById('ent-cliente-id').value = e.customer_id || '';
         document.getElementById('ent-data-saida').value = e.data_saida ? e.data_saida.substring(0, 16) : '';
         document.getElementById('ent-data-prevista').value = e.data_prevista ? e.data_prevista.substring(0, 16) : '';
         document.getElementById('ent-status').value = e.status || 'pendente';
         document.getElementById('ent-peso').value = e.peso_kg || '';
+        document.getElementById('ent-route-distance').value = e.route_distance_km || '';
         document.getElementById('ent-observacoes').value = e.observacoes || '';
       }
     } else {
@@ -158,6 +163,30 @@ const Entregas = {
     if (current) sel.value = current;
   },
 
+  async loadVeiculos() {
+    const result = await API.get('/veiculos?limit=100');
+    if (!result || !result.ok) return;
+    const sel = document.getElementById('ent-veiculo');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Selecionar veículo...</option>';
+    result.data.data.forEach(v => {
+      sel.innerHTML += '<option value="' + v.id + '">' + v.license_plate + ' — ' + v.manufacturer + ' ' + v.model + '</option>';
+    });
+    if (current) sel.value = current;
+  },
+
+  async loadClientes() {
+    const result = await API.get('/clientes?limit=100');
+    if (!result || !result.ok) return;
+    const sel = document.getElementById('ent-cliente-id');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Selecionar cliente...</option>';
+    result.data.data.forEach(c => {
+      sel.innerHTML += '<option value="' + c.id + '">' + c.name + ' — ' + c.cpf_cnpj + '</option>';
+    });
+    if (current) sel.value = current;
+  },
+
   async save() {
     const data = {
       cliente_nome: document.getElementById('ent-cliente-nome').value.trim(),
@@ -168,10 +197,13 @@ const Entregas = {
       cidade_destino: document.getElementById('ent-cidade-destino').value.trim(),
       motorista_id: document.getElementById('ent-motorista').value || null,
       rota_id: document.getElementById('ent-rota').value || null,
+      vehicle_id: document.getElementById('ent-veiculo').value || null,
+      customer_id: document.getElementById('ent-cliente-id').value || null,
       data_saida: document.getElementById('ent-data-saida').value || null,
       data_prevista: document.getElementById('ent-data-prevista').value,
       status: document.getElementById('ent-status').value,
       peso_kg: document.getElementById('ent-peso').value || null,
+      route_distance_km: document.getElementById('ent-route-distance').value || null,
       observacoes: document.getElementById('ent-observacoes').value.trim()
     };
 

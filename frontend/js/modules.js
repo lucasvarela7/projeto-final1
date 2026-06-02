@@ -95,6 +95,7 @@ const Motoristas = {
   async openModal(id) {
     this.editingId = id || null;
     document.getElementById('modal-motorista-title').textContent = id ? 'Editar Motorista' : 'Novo Motorista';
+    await this.loadVeiculos();
     if (id) {
       const result = await API.get('/motoristas/' + id);
       if (result && result.ok) {
@@ -108,12 +109,25 @@ const Motoristas = {
         document.getElementById('mot-placa').value = m.placa_veiculo || '';
         document.getElementById('mot-status').value = m.status || 'ativo';
         document.getElementById('mot-observacoes').value = m.observacoes || '';
+        document.getElementById('mot-veiculo-id').value = m.vehicle_id || '';
       }
     } else {
       document.getElementById('form-motorista').reset();
       document.getElementById('mot-status').value = 'ativo';
     }
     Modal.open('modal-motorista');
+  },
+
+  async loadVeiculos() {
+    const result = await API.get('/veiculos?limit=100');
+    const sel = document.getElementById('mot-veiculo-id');
+    if (!sel || !result || !result.ok) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Selecionar veículo vinculado...</option>';
+    result.data.data.forEach(v => {
+      sel.innerHTML += '<option value="' + v.id + '">' + v.license_plate + ' — ' + v.manufacturer + ' ' + v.model + '</option>';
+    });
+    if (current) sel.value = current;
   },
 
   async save() {
@@ -126,7 +140,8 @@ const Motoristas = {
       veiculo: document.getElementById('mot-veiculo').value.trim(),
       placa_veiculo: document.getElementById('mot-placa').value.trim(),
       status: document.getElementById('mot-status').value,
-      observacoes: document.getElementById('mot-observacoes').value.trim()
+      observacoes: document.getElementById('mot-observacoes').value.trim(),
+      vehicle_id: document.getElementById('mot-veiculo-id').value || null
     };
     if (!data.nome || !data.cpf || !data.telefone || !data.cnh) {
       Toast.show('Preencha todos os campos obrigatórios', 'warning');

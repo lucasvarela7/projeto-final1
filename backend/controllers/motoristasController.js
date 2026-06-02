@@ -11,8 +11,9 @@ const listar = async (req, res, next) => {
     if (busca) { where += ' AND (m.nome LIKE ? OR m.cpf LIKE ? OR m.cnh LIKE ?)'; params.push(`%${busca}%`, `%${busca}%`, `%${busca}%`); }
 
     const [rows] = await db.query(
-      `SELECT m.*, u.nome as usuario_nome FROM motoristas m
+      `SELECT m.*, u.nome as usuario_nome, v.license_plate, v.model as vehicle_model FROM motoristas m
        LEFT JOIN usuarios u ON m.usuario_id = u.id
+       LEFT JOIN vehicles v ON v.id = m.vehicle_id
        ${where} ORDER BY m.nome LIMIT ? OFFSET ?`,
       [...params, parseInt(limit), parseInt(offset)]
     );
@@ -25,8 +26,10 @@ const listar = async (req, res, next) => {
 const buscarPorId = async (req, res, next) => {
   try {
     const [rows] = await db.query(
-      `SELECT m.*, u.nome as usuario_nome FROM motoristas m
-       LEFT JOIN usuarios u ON m.usuario_id = u.id WHERE m.id = ?`,
+      `SELECT m.*, u.nome as usuario_nome, v.license_plate, v.model as vehicle_model FROM motoristas m
+       LEFT JOIN usuarios u ON m.usuario_id = u.id
+       LEFT JOIN vehicles v ON v.id = m.vehicle_id
+       WHERE m.id = ?`,
       [req.params.id]
     );
     if (!rows.length) return res.status(404).json({ success: false, message: 'Motorista não encontrado' });
@@ -43,12 +46,12 @@ const buscarPorId = async (req, res, next) => {
 
 const criar = async (req, res, next) => {
   try {
-    const { nome, cpf, telefone, cnh, categoria_cnh, veiculo, placa_veiculo, status, usuario_id, observacoes } = req.body;
+    const { nome, cpf, telefone, cnh, categoria_cnh, veiculo, placa_veiculo, status, usuario_id, observacoes, vehicle_id } = req.body;
 
     const [result] = await db.query(
-      `INSERT INTO motoristas (nome, cpf, telefone, cnh, categoria_cnh, veiculo, placa_veiculo, status, usuario_id, observacoes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nome, cpf, telefone, cnh, categoria_cnh || 'B', veiculo, placa_veiculo, status || 'ativo', usuario_id || null, observacoes]
+      `INSERT INTO motoristas (nome, cpf, telefone, cnh, categoria_cnh, veiculo, placa_veiculo, status, usuario_id, observacoes, vehicle_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nome, cpf, telefone, cnh, categoria_cnh || 'B', veiculo, placa_veiculo, status || 'ativo', usuario_id || null, observacoes, vehicle_id || null]
     );
 
     res.status(201).json({ success: true, message: 'Motorista cadastrado com sucesso', data: { id: result.insertId } });
@@ -57,13 +60,13 @@ const criar = async (req, res, next) => {
 
 const atualizar = async (req, res, next) => {
   try {
-    const { nome, cpf, telefone, cnh, categoria_cnh, veiculo, placa_veiculo, status, usuario_id, observacoes } = req.body;
+    const { nome, cpf, telefone, cnh, categoria_cnh, veiculo, placa_veiculo, status, usuario_id, observacoes, vehicle_id } = req.body;
     const [rows] = await db.query('SELECT id FROM motoristas WHERE id = ?', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, message: 'Motorista não encontrado' });
 
     await db.query(
-      `UPDATE motoristas SET nome=?, cpf=?, telefone=?, cnh=?, categoria_cnh=?, veiculo=?, placa_veiculo=?, status=?, usuario_id=?, observacoes=? WHERE id=?`,
-      [nome, cpf, telefone, cnh, categoria_cnh || 'B', veiculo, placa_veiculo, status || 'ativo', usuario_id || null, observacoes, req.params.id]
+      `UPDATE motoristas SET nome=?, cpf=?, telefone=?, cnh=?, categoria_cnh=?, veiculo=?, placa_veiculo=?, status=?, usuario_id=?, observacoes=?, vehicle_id=? WHERE id=?`,
+      [nome, cpf, telefone, cnh, categoria_cnh || 'B', veiculo, placa_veiculo, status || 'ativo', usuario_id || null, observacoes, vehicle_id || null, req.params.id]
     );
 
     res.json({ success: true, message: 'Motorista atualizado com sucesso' });

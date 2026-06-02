@@ -16,7 +16,7 @@ router.post('/register', authenticate, authorize('administrador'), [
   body('nome').notEmpty().withMessage('Nome obrigatório'),
   body('email').isEmail().withMessage('E-mail inválido'),
   body('senha').isLength({ min: 6 }).withMessage('Senha deve ter no mínimo 6 caracteres'),
-  body('cargo').optional().isIn(['administrador', 'operador', 'motorista']).withMessage('Cargo inválido')
+  body('cargo').notEmpty().withMessage('Cargo obrigatório').isIn(['administrador', 'operador', 'motorista']).withMessage('Cargo inválido')
 ], validate, register);
 
 // GET /api/auth/me
