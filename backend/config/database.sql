@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   ultimo_login DATETIME DEFAULT NULL,
   criado_em   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT chk_email CHECK (email REGEXP '^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$')
+  ALTER TABLE usuarios ADD CONSTRAINT chk_email CHECK (email REGEXP '^[^@]+@[^@]+\.[^@]{2,}$');
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -176,5 +176,3 @@ INSERT INTO rastreamento (entrega_id, localizacao, status, descricao) VALUES
 (2, 'Rodovia Presidente Dutra, km 300', 'em_rota', 'Em trânsito'),
 (2, 'Rio de Janeiro - RJ (Destino)', 'entregue', 'Entrega realizada com sucesso. Recebido por: João da Silva');
 
-ALTER TABLE usuarios DROP CONSTRAINT chk_email;
-ALTER TABLE usuarios ADD CONSTRAINT chk_email CHECK (email REGEXP '^[^@]+@[^@]+\.[^@]{2,}$');
