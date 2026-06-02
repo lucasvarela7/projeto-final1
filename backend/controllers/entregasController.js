@@ -95,17 +95,18 @@ const atualizar = async (req, res, next) => {
     const [rows] = await db.query('SELECT id, status FROM entregas WHERE id = ?', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, message: 'Entrega não encontrada' });
 
-    const dataEntrega = status === 'entregue' ? new Date() : null;
-    await db.query(
-      `UPDATE entregas SET cliente_nome=?, cliente_telefone=?, cliente_email=?, endereco_origem=?,
-       endereco_destino=?, cidade_destino=?, cep_destino=?, motorista_id=?, rota_id=?,
-       data_saida=?, data_prevista=?, status=?, data_entrega=${dataEntrega},
-       peso_kg=?, volume_m3=?, valor_declarado=?, observacoes=? WHERE id=?`,
-      [cliente_nome, cliente_telefone, cliente_email, endereco_origem, endereco_destino,
-       cidade_destino, cep_destino, motorista_id || null, rota_id || null,
-       data_saida || null, data_prevista, status || rows[0].status,
-       peso_kg, volume_m3, valor_declarado, observacoes, req.params.id]
-    );
+   const dataEntrega = status === 'entregue' ? new Date() : null;
+await db.query(
+  `UPDATE entregas SET cliente_nome=?, cliente_telefone=?, cliente_email=?, endereco_origem=?,
+   endereco_destino=?, cidade_destino=?, cep_destino=?, motorista_id=?, rota_id=?,
+   data_saida=?, data_prevista=?, status=?, data_entrega=?,
+   peso_kg=?, volume_m3=?, valor_declarado=?, observacoes=? WHERE id=?`,
+  [cliente_nome, cliente_telefone, cliente_email, endereco_origem, endereco_destino,
+   cidade_destino, cep_destino, motorista_id || null, rota_id || null,
+   data_saida || null, data_prevista, status || rows[0].status,
+   dataEntrega,  // ← agora é um valor, não string
+   peso_kg, volume_m3, valor_declarado, observacoes, req.params.id]
+);
 
     // Se status mudou, registrar rastreamento
     if (status && status !== rows[0].status) {

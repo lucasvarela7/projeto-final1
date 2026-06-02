@@ -7,11 +7,46 @@ const Dashboard = {
 
   async load() {
     const result = await API.get('/entregas/dashboard');
-    if (!result || !result.ok) return;
+    if (!result || !result.ok) {
+      this.showError();
+      return;
+    }
     const data = result.data.data;
     this.renderStats(data);
     this.renderCharts(data);
     this.renderUltimasEntregas(data.ultimas_entregas);
+  },
+
+  showError() {
+    // Zerar estatísticas
+    document.getElementById('stat-total').textContent = '—';
+    document.getElementById('stat-entregues').textContent = '—';
+    document.getElementById('stat-em-rota').textContent = '—';
+    document.getElementById('stat-atrasadas').textContent = '—';
+    document.getElementById('stat-pendentes').textContent = '—';
+    document.getElementById('stat-motoristas').textContent = '—';
+    document.getElementById('stat-motoristas-ativos').textContent = '';
+    const taxaEl = document.getElementById('stat-taxa');
+    if (taxaEl) taxaEl.textContent = '—';
+
+    // Tabela de últimas entregas
+    const tbody = document.getElementById('ultimas-entregas-tbody');
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align:center; padding:32px;">
+            <div class="empty-state">
+              <div class="empty-icon">⚠️</div>
+              <h3>Não foi possível carregar os dados</h3>
+              <p>Verifique sua conexão ou tente novamente mais tarde.</p>
+            </div>
+          </td>
+        </tr>`;
+    }
+
+    // Destruir gráficos antigos
+    if (this.charts.status) this.charts.status.destroy();
+    if (this.charts.dia) this.charts.dia.destroy();
   },
 
   renderStats(data) {
